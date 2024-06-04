@@ -1,0 +1,1532 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AIRNB  API",
+    "description": "API endpoints for user registration, authentication, place management, booking, review, payment.",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "apiKey",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Enter your JWT token in the format 'Bearer YOUR_TOKEN_HERE'"
+      }
+    },
+    "schemas": {
+      "Place": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The ID of the user who added the place."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "IDs of the services offered at the place."
+            }
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the place."
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the place."
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "houseNo": {
+                "type": "string",
+                "description": "The house number of the place."
+              },
+              "streetAddress": {
+                "type": "string",
+                "description": "The street address of the place."
+              },
+              "landmark": {
+                "type": "string",
+                "description": "A nearby landmark."
+              },
+              "state": {
+                "type": "string",
+                "description": "The state of the place."
+              },
+              "country": {
+                "type": "string",
+                "description": "The country of the place."
+              },
+              "pin": {
+                "type": "string",
+                "description": "The postal/ZIP code of the place."
+              }
+            }
+          },
+          "price": {
+            "type": "object",
+            "properties": {
+              "fixedPrice": {
+                "type": "number",
+                "description": "The fixed price per night for the place."
+              },
+              "dayBasedDiscount": {
+                "type": "number",
+                "description": "Optional: The discount for longer stays (e.g., weekly discount)."
+              },
+              "fiveDayDiscount": {
+                "type": "number",
+                "description": "Optional: Additional discount for extended stays."
+              }
+            }
+          },
+          "fees": {
+            "type": "object",
+            "properties": {
+              "cleaningService": {
+                "type": "number",
+                "description": "The cleaning service fee."
+              },
+              "otherService": {
+                "type": "number",
+                "description": "Other service fees."
+              }
+            }
+          },
+          "capacity": {
+            "type": "number",
+            "description": "The maximum capacity of the place."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "URLs of images depicting the place."
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+  
+    "/auth/register": {
+      
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User Registration",
+        "description": "Register a new user.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "First name of the user.",
+                    "example": "John"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "Last name of the user.",
+                    "example": "Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user.",
+                    "example": "john@example.com"
+                  },
+                  "contact": {
+                    "type": "string",
+                    "description": "Contact number of the user (formatted as string).",
+                    "example": "1234567890"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Password of the user.",
+                    "example": "password123"
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "email",
+                  "contact",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User registered successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags":["Auth"],
+        "summary": "Authenticate user and generate access token",
+        "description": "Authenticate user using email and password and generate access token for successful login.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user.",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Password of the user.",
+                    "example": "password123"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT access token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hostRoute/becomeHost": {
+      "put": {
+        "tags":["host control"],
+        "summary": "Become a host",
+        "description": "Updates the user database to mark the user as a host.",
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/hostRoute/place": {
+      "post": {
+        "tags": ["host control"],
+        "summary": "Add a new place",
+        "description": "Endpoint to add a new place by a host.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "services": {
+                    "type": "array",
+                    "items":{
+                      "type":"string",
+                      "description": "The IDs of the services offered at the place.",
+                      "example": "pool"
+                    }
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the place.",
+                    "example": "Beautiful Mountain House"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description of the place.",
+                    "example": "A stunning mountain property with breathtaking views."
+                  },
+                  "address[houseNo]": {
+                    "type": "string",
+                    "example": "123"
+                  },
+                  "address[streetAddress]": {
+                    "type": "string",
+                    "example": "Mountain View Drive"
+                  },
+                  "address[landmark]": {
+                    "type": "string",
+                    "example": "Himalaya"
+                  },
+                  "address[state]": {
+                    "type": "string",
+                    "example": "uk"
+                  },
+                  "address[country]": {
+                    "type": "string",
+                    "example": "India"
+                  },
+                  "address[pin]": {
+                    "type": "string",
+                    "example": "90210"
+                  },
+                  "price[fixedPrice]": {
+                    "type": "number",
+                    "example": 150
+                  },
+                  "price[dayBasedDiscount]": {
+                    "type": "number",
+                    "example": 10
+                  },
+                  "price[fiveDayDiscount]": {
+                    "type": "number",
+                    "example": 15
+                  },
+                  "fees[cleaningService]": {
+                    "type": "number",
+                    "description": "The cleaning service fee.",
+                    "example": 10
+                  },
+                  "fees[otherService]": {
+                    "type": "number",
+                    "description": "Other service fees.",
+                    "example": 20
+                  },
+                  "capacity": {
+                    "type": "number",
+                    "description": "The maximum capacity of the place.",
+                    "example": 6
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "file",
+                      "description": "Images depicting the place."
+                    },
+                    "description": "Array of images.",
+                    "example": ["image1.jpg", "image2.jpg"],
+                    "x-nullable": true
+                  }
+                },
+                "required": ["title", "description", "address[houseNo]", "address[streetAddress]", "address[state]", "address[country]", "address[pin]", "price[fixedPrice]", "price[dayBasedDiscount]", "price[fiveDayDiscount]","fees[cleaningService]", "fees[otherService]", "capacity", "images"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Place added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Place added successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "delete": {
+        "tags":["host control"],
+        "summary": "Delete a place",
+        "description": "Delete a place by its ID.",
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "query",
+            "description": "ID of the place to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Place deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid token."
+          },
+          "404": {
+            "description": "Place not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "put": {
+        "tags": ["host control"],
+        "summary": "Update a place",
+        "description": "Update a place by its ID.",
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "query",
+            "description": "ID of the place to update.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "609c7f1b0c3e5e001f9b1624"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The title of the place.",
+                    "example": "Beautiful Beach House"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description of the place.",
+                    "example": "A stunning beachfront property with breathtaking views."
+                  },
+                  "address[houseNo]": {
+                    "type": "string",
+                    "description": "The house number of the place.",
+                    "example": "123"
+                  },
+                  "address[streetAddress]": {
+                    "type": "string",
+                    "description": "The street address of the place.",
+                    "example": "Ocean View Drive"
+                  },
+                  "address[landmark]": {
+                    "type": "string",
+                    "description": "A nearby landmark."
+                  },
+                  "address[state]": {
+                    "type": "string",
+                    "description": "The state of the place.",
+                    "example": "California"
+                  },
+                  "address[country]": {
+                    "type": "string",
+                    "description": "The country of the place.",
+                    "example": "USA"
+                  },
+                  "address[pin]": {
+                    "type": "string",
+                    "description": "The postal/ZIP code of the place.",
+                    "example": "90210"
+                  },
+                  "price[fixedPrice]": {
+                    "type": "number",
+                    "description": "The fixed price per night for the place.",
+                    "example": 150
+                  },
+                  "price[dayBasedDiscount]": {
+                    "type": "number",
+                    "description": "Optional: The discount for longer stays (e.g., weekly discount)."
+                  },
+                  "price[fiveDayDiscount]": {
+                    "type": "number",
+                    "description": "Optional: Additional discount for extended stays."
+                  },
+                  "fees[cleaningService]": {
+                    "type": "number",
+                    "description": "The cleaning service fee."
+                  },
+                  "fees[otherService]": {
+                    "type": "number",
+                    "description": "Other service fees."
+                  },
+                  "capacity": {
+                    "type": "number",
+                    "description": "The maximum capacity of the place.",
+                    "example": 6
+                  }
+                },
+                "required": [
+                  "title",
+                  "description",
+                  "address[houseNo]",
+                  "address[streetAddress]",
+                  "address[state]",
+                  "address[country]",
+                  "address[pin]",
+                  "price[fixedPrice]",
+                  "price[dayBasedDiscount]",
+                  "price[fiveDayDiscount]",
+                  "fees[cleaningService]",
+                  "fees[otherService]",
+                  "capacity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Place updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Place updated successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      },
+      "get": {
+        "tags":["host control"],
+        "summary": "Get all your Lising",
+        "description": "Get listing by user ID",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "Body",
+            "description": "ID is fetched from header, don't enter anything here",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Your listing are.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success":{
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Place added successfully."
+                    },
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "The IDs of the services offered at the place.",
+                        "example": [
+                          "pool",
+                          "playing Area"
+                        ]
+                      }
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "The title of the place.",
+                      "example": "Beautiful Beach House"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "The description of the place.",
+                      "example": "A stunning beachfront property with breathtaking views."
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "houseNo": {
+                          "type": "string",
+                          "description": "The house number of the place.",
+                          "example": "123"
+                        },
+                        "streetAddress": {
+                          "type": "string",
+                          "description": "The street address of the place.",
+                          "example": "Ocean View Drive"
+                        },
+                        "landmark": {
+                          "type": "string",
+                          "description": "A nearby landmark."
+                        },
+                        "state": {
+                          "type": "string",
+                          "description": "The state of the place.",
+                          "example": "California"
+                        },
+                        "country": {
+                          "type": "string",
+                          "description": "The country of the place.",
+                          "example": "USA"
+                        },
+                        "pin": {
+                          "type": "string",
+                          "description": "The postal/ZIP code of the place.",
+                          "example": "90210"
+                        }
+                      }
+                    },
+                    "price": {
+                      "type": "object",
+                      "properties": {
+                        "fixedPrice": {
+                          "type": "number",
+                          "description": "The fixed price per night for the place.",
+                          "example": 150
+                        },
+                        "dayBasedDiscount": {
+                          "type": "number",
+                          "description": "Optional: The discount for longer stays (e.g., weekly discount).",
+                          "example":"10"
+                        },
+                        "fiveDayDiscount": {
+                          "type": "number",
+                          "description": "Optional: Additional discount for extended stays.",
+                          "example":"20"
+                        }
+                      }
+                    },
+                    "fees": {
+                      "type": "object",
+                      "properties": {
+                        "cleaningService": {
+                          "type": "number",
+                          "description": "The cleaning service fee.",
+                          "example":"15"
+                        
+                        },
+                        "otherService": {
+                          "type": "number",
+                          "description": "Other service fees.",
+                          "example":"25"
+                        }
+                      }
+                    },
+                    "capacity": {
+                      "type": "number",
+                      "description": "The maximum capacity of the place.",
+                      "example": 6
+                    },
+                    "images": {
+                      "type": "array",
+                      "items": {
+                        "type": "file",
+                        "description": "Images depicting the place."
+                      },
+                      "example": ["image1.jpg", "image2.jpg"]
+                    }
+                  }
+                }
+
+              }
+            }
+
+          },
+          "401": {
+            "description": "Unauthorized - Invalid token."
+          },
+          "404": {
+            "description": "No listed place found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    }, 
+    "/hostRoute/place/getBooking": {
+      "get": {
+        "tags":["Host Booking Controls"],
+        "summary": "Get booking list for a place",
+        "description": "Retrieve the list of bookings for a specific place.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "placeId",
+            "description": "ID of the place for which bookings are to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bookings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the booking"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "description": "ID of the user who made the booking"
+                      },
+                      "placeId": {
+                        "type": "string",
+                        "description": "ID of the place for which the booking is made"
+                      },
+                      "fromDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Start date of the booking"
+                      },
+                      "toDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "End date of the booking"
+                      },
+                      "capacity": {
+                        "type": "integer",
+                        "description": "Capacity of the booking"
+                      },
+                      "bill": {
+                        "type": "object",
+                        "description": "Bill information for the booking"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": ["pending", "accepted", "rejected"],
+                        "default": "pending",
+                        "description": "Status of the booking"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No bookings found for the specified placeId"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/hostRoute/place/update": {
+      "put": {
+        "tags":["Host Booking Controls"],
+        "summary": "Update booking status",
+        "description": "Update the status of a booking by its ID.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bookingId",
+            "description": "ID of the booking to be updated",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "accepted", "rejected"],
+                    "description": "New status for the booking"
+                  }
+                },
+                "required": ["status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Record updated"
+          },
+          "404": {
+            "description": "Booking not found for the specified ID"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }, 
+    "/userRoute/getPlaces": {
+      "get": {
+        "tags":["Client Listing"],
+        "summary": "Get list of places",
+        "description": "Retrieve a list of places.",
+        "responses": {
+          "200": {
+            "description": "List of places retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the place"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "description": "ID of the user who owns the place"
+                      },
+                      "services": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of services provided by the place"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "Title of the place"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the place"
+                      },
+                      "address": {
+                        "type": "object",
+                        "properties": {
+                          "houseNo": {
+                            "type": "string"
+                          },
+                          "streetAddress": {
+                            "type": "string"
+                          },
+                          "landmark": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          },
+                          "pin": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "price": {
+                        "type": "object",
+                        "properties": {
+                          "fixedPrice": {
+                            "type": "number"
+                          },
+                          "dayBasedDiscount": {
+                            "type": "number"
+                          },
+                          "fiveDayDiscount": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "fees": {
+                        "type": "object",
+                        "properties": {
+                          "cleaningService": {
+                            "type": "number"
+                          },
+                          "otherService": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "capacity": {
+                        "type": "number",
+                        "description": "Capacity of the place"
+                      },
+                      "images": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of image URLs for the place"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/userRoute/filterPlaces": {
+      "get": {
+        "tags":["Client Listing"],
+        "summary": "Filter places by location or service",
+        "description": "Retrieve a list of places based on the provided search query.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "description": "Search query to filter places by location or service",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of places retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the place"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "description": "ID of the user who owns the place"
+                      },
+                      "services": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of services provided by the place"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "Title of the place"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the place"
+                      },
+                      "address": {
+                        "type": "object",
+                        "properties": {
+                          "houseNo": {
+                            "type": "string"
+                          },
+                          "streetAddress": {
+                            "type": "string"
+                          },
+                          "landmark": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "country": {
+                            "type": "string"
+                          },
+                          "pin": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "price": {
+                        "type": "object",
+                        "properties": {
+                          "fixedPrice": {
+                            "type": "number"
+                          },
+                          "dayBasedDiscount": {
+                            "type": "number"
+                          },
+                          "fiveDayDiscount": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "fees": {
+                        "type": "object",
+                        "properties": {
+                          "cleaningService": {
+                            "type": "number"
+                          },
+                          "otherService": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "capacity": {
+                        "type": "number",
+                        "description": "Capacity of the place"
+                      },
+                      "images": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "List of image URLs for the place"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No places found for the specified search query"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/userRoute/recommendation":{
+      "get": {
+        "tags":["Client Listing"],
+        "summary": "Get recommended places based on booking frequency",
+        "description": "Retrieves a list of places sorted in descending order based on the frequency of bookings.",
+        "responses": {
+          "200": {
+            "description": "A list of recommended places",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the place"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The name of the place"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "A brief description of the place"
+                      },
+                      "address": {
+                        "type": "object",
+                        "description": "The address of the place",
+                        "properties": {
+                          "houseNo": {
+                            "type": "string",
+                            "description": "The house number"
+                          },
+                          "streetAddress": {
+                            "type": "string",
+                            "description": "The street address"
+                          },
+                          "landmark": {
+                            "type": "string",
+                            "description": "A nearby landmark"
+                          },
+                          "state": {
+                            "type": "string",
+                            "description": "The state"
+                          },
+                          "country": {
+                            "type": "string",
+                            "description": "The country"
+                          },
+                          "pin": {
+                            "type": "string",
+                            "description": "The postal code"
+                          }
+                        }
+                      },
+                      "price": {
+                        "type": "object",
+                        "description": "The pricing information of the place",
+                        "properties": {
+                          "fixedPrice": {
+                            "type": "number",
+                            "description": "The fixed price"
+                          },
+                          "dayBasedDiscount": {
+                            "type": "number",
+                            "description": "The discount for day-based bookings"
+                          },
+                          "fiveDayDiscount": {
+                            "type": "number",
+                            "description": "The discount for bookings of five days or more"
+                          }
+                        }
+                      },
+                      "capacity": {
+                        "type": "number",
+                        "description": "The capacity of the place"
+                      },
+                      "images": {
+                        "type": "array",
+                        "description": "URLs of images related to the place",
+                        "items": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+
+    },
+    "/userRoute/bookPlace": {
+      "post": {
+        "tags":["booking"],
+        "summary": "Book a place",
+        "description": "Book a place for a specific time period.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "placeId",
+            "description": "ID of the place to book",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fromDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start date of the booking (ISO format)"
+                  },
+                  "toDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End date of the booking (ISO format)"
+                  },
+                  "capacity": {
+                    "type": "integer",
+                    "description": "Capacity required for the booking"
+                  }
+                },
+                "required": ["fromDate", "toDate", "capacity"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking successful"
+          },
+          "400": {
+            "description": "Bad request - Invalid input parameters"
+          },
+          "404": {
+            "description": "Place not found or already booked for the specified time period"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }, 
+    "/userRoute/status": {
+      "get": {
+        "tags":["booking"],
+        "summary": "Get user status",
+        "description": "Retrieve the status of the user.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for user authentication",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Status of the user"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/reviewPaymentRoute/review": {
+      "get": {
+        "tags":["Review"],
+        "summary": "Get the list of review that a user can give",
+        "description": "Retrieve the list of place a user can review.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for user authentication",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of place you can review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "List of place for review"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags":["Review"],
+        "summary": "Submit a review for a place",
+        "description": "Submit a review for a specific place.",
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "query",
+            "description": "ID of the place to review",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "integer",
+                    "description": "Rating for location (1 to 5)"
+                  },
+                  "cleanliness": {
+                    "type": "integer",
+                    "description": "Rating for cleanliness (1 to 5)"
+                  },
+                  "accuracy": {
+                    "type": "integer",
+                    "description": "Rating for accuracy (1 to 5)"
+                  },
+                  "communication": {
+                    "type": "integer",
+                    "description": "Rating for communication (1 to 5)"
+                  },
+                  "checkIn": {
+                    "type": "integer",
+                    "description": "Rating for check-in experience (1 to 5)"
+                  },
+                  "valueForMoney": {
+                    "type": "integer",
+                    "description": "Rating for value for money (1 to 5)"
+                  },
+                  "feedback": {
+                    "type": "string",
+                    "description": "Feedback or comments about the place"
+                  }
+                },
+                "required": ["location", "cleanliness", "accuracy", "communication", "checkIn", "valueForMoney", "feedback"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review submitted successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid input parameters"
+          },
+          "404": {
+            "description": "Place not found or unable to submit review"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags":["Review"],
+        "summary": "Delete a review for a place",
+        "description": "Delete a review for a specific place.",
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "query",
+            "description": "ID of the place whose review to delete",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review deleted successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid input parameters"
+          },
+          "404": {
+            "description": "Review not found or unable to delete"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/reviewPaymentRoute/rating": {
+      "get": {
+        "tags":["Rating and payment"],
+        "summary": "Get average rating for a place",
+        "description": "Retrieve the average rating for a specific place.",
+        "parameters": [
+          {
+            "name": "placeId",
+            "in": "query",
+            "description": "ID of the place to get rating",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Average rating retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "averageRating": {
+                      "type": "number",
+                      "description": "Average rating for the place"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Place not found or no ratings available"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/reviewPaymentRoute/payment":{
+      "post": {
+        "tags":["Rating and payment"],
+        "summary": "Make payment and update status",
+        "description": "Makes a payment for the specified booking and updates the payment status.",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "query",
+            "description": "The ID of the booking",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment successful and status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Payment successful and status updated"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+
+    }
+
+   
+  }
+}
