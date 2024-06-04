@@ -110,4 +110,4 @@ This single file includes all the necessary content for you to run your code.
 
 ```
 
-<img src="readMEAsset/screenshot.png" >
+<img src="readMEAssset/screenshot.png" >
